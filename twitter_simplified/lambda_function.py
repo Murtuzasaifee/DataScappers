@@ -12,12 +12,12 @@ Environment Variables:
 EventBridge Input:
     {
         "days_back": 0,
-        "s3_bucket": "pf-gtm-general-purpose",
+        "s3_bucket": "s3-bucket-name",
         "queries": [
-            {"search_query": "HDFC Bank",  "s3_prefix": "RBI-DTI/banking/HDFC/socialmedia"},
-            {"search_query": "ICICI Bank", "s3_prefix": "RBI-DTI/banking/ICICI/socialmedia"},
-            {"search_query": "SBI Bank",   "s3_prefix": "RBI-DTI/banking/SBI/socialmedia"},
-            {"search_query": "Axis Bank",  "s3_prefix": "RBI-DTI/banking/AXIS/socialmedia"}
+            {"search_query": "HDFC Bank",  "s3_prefix": "banking/HDFC/socialmedia"},
+            {"search_query": "ICICI Bank", "s3_prefix": "banking/ICICI/socialmedia"},
+            {"search_query": "SBI Bank",   "s3_prefix": "banking/SBI/socialmedia"},
+            {"search_query": "Axis Bank",  "s3_prefix": "banking/AXIS/socialmedia"}
         ]
     }
 """
