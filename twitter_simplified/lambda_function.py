@@ -154,7 +154,7 @@ def _fetch_tweets(
         "max_items":          max_items,
         "search_sort":        "Latest",
         "source_mode":        "search",
-        "tweet_type":         "originals_only",
+        "tweet_type":         "all",
         "blue_verified_only": False,
         "has_hashtags":       False,
         "has_images":         False,

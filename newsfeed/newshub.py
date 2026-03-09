@@ -39,7 +39,7 @@ logger.setLevel(logging.INFO)
 
 API_KEY             = os.environ["NEWSDATA_API_KEY"]
 MINIMUM_ARTICLES    = int(os.environ.get("MINIMUM_ARTICLES", "50"))
-QUERY_STAGGER_SECS  = int(os.environ.get("QUERY_STAGGER_SECS", "2"))
+QUERY_STAGGER_SECS  = int(os.environ.get("QUERY_STAGGER_SECS", "5"))
 API_RETRY_WAIT_SECS = int(os.environ.get("API_RETRY_WAIT_SECS", "5"))
 API_MAX_RETRIES     = int(os.environ.get("API_MAX_RETRIES", "3"))
 BLOCKED_SOURCES     = {"Hello", "hello"}
