@@ -153,7 +153,7 @@ def fetch_news(query, stagger_secs=0, minimum_articles=MINIMUM_ARTICLES):
 
 def save_to_s3(data, bucket, prefix, ts):
     """Upload articles as JSON to S3 and return the S3 URI."""
-    key = f"{prefix.strip('/')}/{ts.strftime('%Y-%m-%d')}/{ts.strftime('%Y-%m-%d_%H-%M-%S')}.json"
+    key = f"{prefix.strip('/')}/news/{ts.strftime('%Y-%m-%d')}/{ts.strftime('%Y-%m-%d_%H-%M-%S')}.json"    
     s3.put_object(
         Bucket=bucket,
         Key=key,

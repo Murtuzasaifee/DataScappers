@@ -412,7 +412,7 @@ def _upload(bucket: str, prefix: str, payload: dict) -> str:
     now       = datetime.now(tz=timezone.utc)
     date_str  = now.strftime("%Y-%m-%d")
     timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
-    key       = f"{prefix.rstrip('/')}/{date_str}/{timestamp}.json"
+    key = f"{prefix.rstrip('/')}/socialmedia/{date_str}/{timestamp}.json"
 
     s3.put_object(
         Bucket=bucket,
