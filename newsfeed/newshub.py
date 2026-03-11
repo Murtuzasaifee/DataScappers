@@ -24,11 +24,11 @@ Lambda Layer:
 """
 
 import json
+import logging
 import os
 import time
-import logging
-from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 
 import boto3
 import requests
@@ -37,13 +37,13 @@ import trafilatura
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-API_KEY             = os.environ["NEWSDATA_API_KEY"]
-MINIMUM_ARTICLES    = int(os.environ.get("MINIMUM_ARTICLES", "50"))
-QUERY_STAGGER_SECS  = int(os.environ.get("QUERY_STAGGER_SECS", "5"))
+API_KEY = os.environ["NEWSDATA_API_KEY"]
+MINIMUM_ARTICLES = int(os.environ.get("MINIMUM_ARTICLES", "50"))
+QUERY_STAGGER_SECS = int(os.environ.get("QUERY_STAGGER_SECS", "5"))
 API_RETRY_WAIT_SECS = int(os.environ.get("API_RETRY_WAIT_SECS", "5"))
-API_MAX_RETRIES     = int(os.environ.get("API_MAX_RETRIES", "3"))
-BLOCKED_SOURCES     = {"Hello", "hello"}
-BASE_URL            = "https://newsdata.io/api/1/latest"
+API_MAX_RETRIES = int(os.environ.get("API_MAX_RETRIES", "3"))
+BLOCKED_SOURCES = {"Hello", "hello"}
+BASE_URL = "https://newsdata.io/api/1/latest"
 
 s3 = boto3.client("s3")
 
@@ -52,7 +52,9 @@ def scrape_article(url, retries=2):
     """Fetch full article text from a URL."""
     for attempt in range(retries + 1):
         try:
-            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            response = requests.get(
+                url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10
+            )
             if response.status_code == 200:
                 content = trafilatura.extract(response.text)
                 if content:
@@ -77,11 +79,16 @@ def fetch_page(params, retry_wait=API_RETRY_WAIT_SECS, max_retries=API_MAX_RETRI
 
         # Rate limit or transient error — wait and retry
         error_code = data.get("results", {})
-        logger.warning("API error (attempt %d/%d) for query '%s': %s",
-                       attempt + 1, max_retries + 1, params.get("q"), data)
+        logger.warning(
+            "API error (attempt %d/%d) for query '%s': %s",
+            attempt + 1,
+            max_retries + 1,
+            params.get("q"),
+            data,
+        )
 
         if attempt < max_retries:
-            wait = retry_wait * (attempt + 1)   # incremental back-off: 5s, 10s, 15s
+            wait = retry_wait * (attempt + 1)  # incremental back-off: 5s, 10s, 15s
             logger.info("Retrying in %ds...", wait)
             time.sleep(wait)
         else:
@@ -108,7 +115,7 @@ def fetch_news(query, stagger_secs=0, minimum_articles=MINIMUM_ARTICLES):
             "country": "in",
             "removeduplicate": "1",
             "q": query,
-            "category": "business,breaking,politics"
+            "category": "business,breaking,politics",
         }
         if next_page:
             params["page"] = next_page
@@ -119,14 +126,16 @@ def fetch_news(query, stagger_secs=0, minimum_articles=MINIMUM_ARTICLES):
             source = article.get("source_name")
             if source in BLOCKED_SOURCES:
                 continue
-            collected_articles.append({
-                "title":       article.get("title"),
-                "description": article.get("description"),
-                "pubDate":     article.get("pubDate"),
-                "link":        article.get("link"),
-                "source":      source,
-                "category":    article.get("category"),
-            })
+            collected_articles.append(
+                {
+                    "title": article.get("title"),
+                    "description": article.get("description"),
+                    "pubDate": article.get("pubDate"),
+                    "link": article.get("link"),
+                    "source": source,
+                    "category": article.get("category"),
+                }
+            )
             if len(collected_articles) >= minimum_articles:
                 break
 
@@ -144,7 +153,9 @@ def fetch_news(query, stagger_secs=0, minimum_articles=MINIMUM_ARTICLES):
 
     results = []
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(process_article, article) for article in collected_articles]
+        futures = [
+            executor.submit(process_article, article) for article in collected_articles
+        ]
         for future in as_completed(futures):
             results.append(future.result())
 
@@ -153,12 +164,12 @@ def fetch_news(query, stagger_secs=0, minimum_articles=MINIMUM_ARTICLES):
 
 def save_to_s3(data, bucket, prefix, ts):
     """Upload articles as JSON to S3 and return the S3 URI."""
-    key = f"{prefix.strip('/')}/news/{ts.strftime('%Y-%m-%d')}/{ts.strftime('%Y-%m-%d_%H-%M-%S')}.json"    
+    key = f"{prefix.strip('/')}/news/{ts.strftime('%Y-%m-%d')}/{ts.strftime('%Y-%m-%d_%H-%M-%S')}.json"
     s3.put_object(
         Bucket=bucket,
         Key=key,
         Body=json.dumps(data, ensure_ascii=False, indent=2),
-        ContentType="application/json"
+        ContentType="application/json",
     )
     return f"s3://{bucket}/{key}"
 
@@ -177,16 +188,18 @@ def process_query(query_cfg, bucket, ts, stagger_secs=0):
 
 
 def lambda_handler(event, context):
-    bucket  = event["s3_bucket"]
+    bucket = event["s3_bucket"]
     queries = event["queries"]
-    ts      = datetime.now(tz=timezone.utc)
+    ts = datetime.now(tz=timezone.utc)
 
     # Stagger query starts: query 0 starts immediately, query 1 waits 2s, query 2 waits 4s, etc.
     # They still run in parallel — just their first API call is offset to avoid rate limits.
     results = []
     with ThreadPoolExecutor(max_workers=len(queries)) as executor:
         futures = [
-            executor.submit(process_query, q, bucket, ts, stagger_secs=i * QUERY_STAGGER_SECS)
+            executor.submit(
+                process_query, q, bucket, ts, stagger_secs=i * QUERY_STAGGER_SECS
+            )
             for i, q in enumerate(queries)
         ]
         for future in as_completed(futures):
